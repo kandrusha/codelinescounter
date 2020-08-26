@@ -11,16 +11,16 @@ import java.util.stream.Stream;
 
 public class CodeLineCounter {
 
-  public Map<String, PathInfo> countCodeLines(String pathString) {
-    Map<String, PathInfo> codeLinesMap = new LinkedHashMap<>();
+  public Map<String, FileInfo> countCodeLines(String pathString) {
+    Map<String, FileInfo> codeLinesMap = new LinkedHashMap<>();
     Path root = Paths.get(pathString);
     try (Stream<Path> paths = Files.walk(root)) {
       paths.filter(path -> Files.isRegularFile(path))
         .forEach(path -> {
           long codeLinesCount = countCodeLinesInFile(path);
           int parentsAmount = updateParents(codeLinesMap, root, path, codeLinesCount);
-          PathInfo pathInfo = new PathInfo(path.getFileName().toString(), codeLinesCount, parentsAmount);
-          codeLinesMap.put(path.toString(), pathInfo);
+          FileInfo fileInfo = new FileInfo(path.getFileName().toString(), codeLinesCount, parentsAmount);
+          codeLinesMap.put(path.toString(), fileInfo);
         });
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -28,18 +28,18 @@ public class CodeLineCounter {
     return codeLinesMap;
   }
 
-  private int updateParents(Map<String, PathInfo> codeLinesMap, Path root, Path file, long codeLines) {
+  private int updateParents(Map<String, FileInfo> codeLinesMap, Path root, Path file, long codeLines) {
     if (file.equals(root)) {
       return 0;
     }
     int parentsAmount = updateParents(codeLinesMap, root, file.getParent(), codeLines);
 
-    PathInfo pathInfo = codeLinesMap.getOrDefault(file.getParent().toString(),
-      new PathInfo(file.getParent().getFileName().toString()));
+    FileInfo fileInfo = codeLinesMap.getOrDefault(file.getParent().toString(),
+      new FileInfo(file.getParent().getFileName().toString()));
 
-    pathInfo.setCodeLines(pathInfo.getCodeLines() + codeLines);
-    pathInfo.setParentsAmount(parentsAmount);
-    codeLinesMap.put(file.getParent().toString(), pathInfo);
+    fileInfo.setCodeLines(fileInfo.getCodeLines() + codeLines);
+    fileInfo.setParentsAmount(parentsAmount);
+    codeLinesMap.put(file.getParent().toString(), fileInfo);
 
     return parentsAmount + 1;
 
